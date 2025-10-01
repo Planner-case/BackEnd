@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Simulation {
+  id          Int          @id @default(autoincrement())
+  name        String
+  startDate   DateTime
+  rate        Float        @default(0.04)
+  status      SimulationStatus       @default(VIVO)
+  version     Int          @default(1)      
+  parentId    Int?                          
+  parent      Simulation?  @relation("SimulationVersions", fields: [parentId], references: [id], onDelete: Cascade)
+  versions    Simulation[] @relation("SimulationVersions")
+
+  allocations Allocation[]
+  movements   Movement[]
+  insurances  Insurance[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Allocation {
+  id           Int           @id @default(autoincrement())
+  simulationId Int
+  type         AllocationType
+  name         String
+  value        Float
+  date         DateTime
+  hasFinancing Boolean   @default(false)
+  startDate    DateTime?
+  installments Int?
+  interestRate Float?
+  downPayment  Float?
+
+  Simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+}
+
+model Movement {
+  id           Int           @id @default(autoincrement())
+  simulationId Int
+  type         MovementType
+  value        Float
+  frequency    MovementFrequency
+  startDate    DateTime
+  endDate      DateTime?
+
+  Simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+}
+
+model Insurance {
+  id           Int           @id @default(autoincrement())
+  simulationId Int
+  name         String
+  startDate    DateTime
+  duration     Int           
+  premium      Float         
+  insuredValue Float
+
+  Simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+}
+
+enum SimulationStatus {
+  VIVO
+  MORTO
+  INVALIDO
+}
+
+enum AllocationType {
+  FINANCEIRA
+  IMOBILIZADA
+}
+
+enum MovementType {
+  ENTRADA
+  SAIDA
+}
+
+enum MovementFrequency {
+  UNICA
+  MENSAL
+  ANUAL
+}
