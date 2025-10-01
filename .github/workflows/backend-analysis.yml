@@ -20,16 +20,12 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./BackEnd 
 
       - name: Run tests and generate coverage
         run: npm test -- --coverage
-        working-directory: ./BackEnd
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          projectBaseDir: ./BackEnd
