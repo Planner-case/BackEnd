@@ -81,7 +81,7 @@ export default async function simulationsRoutes(server: FastifyInstance) {
 
   server.post("/:id/version", async (req, reply) => {
     const { id } = req.params as { id: string };
-    const { name, rate, status } = req.body as { name?: string; rate?: number; status?: string };
+    const { name, rate, status } = (req.body || {}) as { name?: string; rate?: number; status?: string };
 
     const original = await server.prisma.simulation.findUnique({
       where: { id: Number(id) },

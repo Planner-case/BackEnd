@@ -122,4 +122,72 @@ describe('construirLinhaDoTempo', () => {
         expect(linhaDoTempo[0].year).toBe(2023);
         expect(linhaDoTempo[linhaDoTempo.length - 1].year).toBe(2025);
     });
+
+    it('deve lidar com movimentações de frequência UNICA', () => {
+        const sim: SimulationWithRelations = {
+            ...simBase,
+            movements: [
+                {
+                    id: 1, simulationId: 1, type: MovementType.ENTRADA, value: 5000, frequency: MovementFrequency.UNICA,
+                    startDate: new Date('2025-01-01T00:00:00.000Z'), endDate: null
+                },
+            ],
+        };
+        const timeline = buildTimeline(sim);
+        const uniqueEvents = timeline.filter(e => e.event === 'Entrada');
+        expect(uniqueEvents).toHaveLength(1);
+        expect(uniqueEvents[0].year).toBe(2025);
+        expect(uniqueEvents[0].impact).toBe(5000);
+    });
+
+    it('não deve incluir movimentações de ENTRADA se o status for MORTO', () => {
+        const sim: SimulationWithRelations = {
+            ...simBase,
+            status: SimulationStatus.MORTO,
+            movements: [
+                {
+                    id: 1, simulationId: 1, type: MovementType.ENTRADA, value: 100, frequency: MovementFrequency.MENSAL,
+                    startDate: new Date('2023-01-01T00:00:00.000Z'), endDate: new Date('2023-12-31T00:00:00.000Z')
+                },
+            ],
+        };
+        const timeline = buildTimeline(sim);
+        const entryEvents = timeline.filter(e => e.event === 'Entrada');
+        expect(entryEvents).toHaveLength(0);
+    });
+
+    it('deve incluir movimentações de SAIDA com valor total se o status for VIVO', () => {
+        const sim: SimulationWithRelations = {
+            ...simBase,
+            status: SimulationStatus.VIVO,
+            movements: [
+                {
+                    id: 1, simulationId: 1, type: MovementType.SAIDA, value: 150, frequency: MovementFrequency.ANUAL,
+                    startDate: new Date('2024-01-01T00:00:00.000Z'), endDate: new Date('2025-12-31T00:00:00.000Z')
+                },
+            ],
+        };
+        const timeline = buildTimeline(sim);
+        const exitEvents = timeline.filter(e => e.event === 'Saída');
+        expect(exitEvents).toHaveLength(2);
+        expect(exitEvents[0].impact).toBe(-150);
+        expect(exitEvents[1].impact).toBe(-150);
+    });
+
+    it('deve continuar as movimentações até o ano final padrão se endDate for nulo', () => {
+        const sim: SimulationWithRelations = {
+            ...simBase,
+            startDate: new Date('2058-01-01T00:00:00.000Z'),
+            movements: [
+                {
+                    id: 1, simulationId: 1, type: MovementType.ENTRADA, value: 100, frequency: MovementFrequency.ANUAL,
+                    startDate: new Date('2058-01-01T00:00:00.000Z'), endDate: null
+                },
+            ],
+        };
+        const timeline = buildTimeline(sim);
+        const entryEvents = timeline.filter(e => e.event === 'Entrada');
+        // 2058, 2059, 2060
+        expect(entryEvents).toHaveLength(3);
+    });
 });
