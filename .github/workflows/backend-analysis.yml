@@ -11,7 +11,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:14
+        image: postgres:15
         env:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
@@ -36,9 +36,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: "postgresql://user:password@localhost:5432/testdb?schema=public"
+
       - name: Run tests and generate coverage
         run: npm test -- --coverage
-
         env:
           DATABASE_URL: "postgresql://user:password@localhost:5432/testdb?schema=public"
 
