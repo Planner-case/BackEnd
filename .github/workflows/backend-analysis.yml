@@ -9,6 +9,21 @@ jobs:
   build-and-analyze:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,6 +38,9 @@ jobs:
 
       - name: Run tests and generate coverage
         run: npm test -- --coverage
+
+        env:
+          DATABASE_URL: "postgresql://user:password@localhost:5432/testdb?schema=public"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
